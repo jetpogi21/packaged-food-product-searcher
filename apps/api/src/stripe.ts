@@ -22,6 +22,27 @@ export async function createCheckoutSession(input: { userId: string; email: stri
   return { url: session.url };
 }
 
+export async function retrieveSubscriptionEntitlement(subscriptionId: string) {
+  if (process.env.PAYMENTS_PROVIDER === "mock") {
+    return { stripeSubscriptionId: subscriptionId, stripeCustomerId: "cus_mock_checkout", status: "active", currentPeriodEnd: null };
+  }
+
+  const stripe = new Stripe(requiredEnvironment("STRIPE_SECRET_KEY"));
+  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as unknown as {
+    id: string;
+    customer: string | { id: string };
+    status: string;
+    current_period_end?: number | null;
+  };
+
+  return {
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
+    status: subscription.status,
+    currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null
+  };
+}
+
 export function constructWebhookEvent(rawBody: Buffer, signature: string | undefined) {
   if (!signature) throw new Error("Stripe signature is required.");
   const webhookSecret = requiredEnvironment("STRIPE_WEBHOOK_SECRET");

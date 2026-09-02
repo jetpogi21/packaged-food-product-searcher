@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { entitlementStore } from "./entitlements.js";
 import { searchHistoryStore } from "./search-history.js";
-import { constructWebhookEvent, createCheckoutSession, PaymentConfigurationError } from "./stripe.js";
+import { constructWebhookEvent, createCheckoutSession, PaymentConfigurationError, retrieveSubscriptionEntitlement } from "./stripe.js";
 
 dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
@@ -191,8 +191,25 @@ function normalizeProduct(product: OpenFoodFactsProduct, locale: SupportedLocale
 
 async function applyStripeEvent(event: { type: string; data: { object: unknown } }) {
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as { client_reference_id?: string | null; customer?: string | { id: string } | null; subscription?: string | { id: string } | null };
-    if (session.client_reference_id) await entitlementStore().linkCheckout(session.client_reference_id, stripeId(session.customer), stripeId(session.subscription));
+    const session = event.data.object as { client_reference_id?: string | null; customer_email?: string | null; customer_details?: { email?: string | null } | null; customer?: string | { id: string } | null; subscription?: string | { id: string } | null };
+    const demoUser = await entitlementStore().demoUser();
+    const checkoutEmail = session.customer_details?.email ?? session.customer_email;
+    const userId = session.client_reference_id ?? (checkoutEmail === demoUser.email ? demoUser.id : null);
+
+    if (userId) {
+      const subscriptionId = stripeId(session.subscription);
+      await entitlementStore().linkCheckout(userId, stripeId(session.customer), subscriptionId);
+      if (subscriptionId) {
+        const subscription = await retrieveSubscriptionEntitlement(subscriptionId);
+        await entitlementStore().updateSubscription({
+          userId,
+          stripeCustomerId: subscription.stripeCustomerId,
+          stripeSubscriptionId: subscription.stripeSubscriptionId,
+          status: subscription.status,
+          currentPeriodEnd: subscription.currentPeriodEnd
+        });
+      }
+    }
     return;
   }
 
