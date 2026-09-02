@@ -8,10 +8,29 @@ datasource db {
 }
 
 model User {
-  id        String          @id @default(cuid())
-  email     String          @unique
-  createdAt DateTime        @default(now())
-  searches  SearchHistory[]
+  id          String                   @id @default(cuid())
+  email       String                   @unique
+  createdAt   DateTime                 @default(now())
+  searches    SearchHistory[]
+  entitlement SubscriptionEntitlement?
+}
+
+model SubscriptionEntitlement {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  stripeCustomerId     String?  @unique @db.VarChar(255)
+  stripeSubscriptionId String?  @unique @db.VarChar(255)
+  status               String   @db.VarChar(32)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StripeWebhookEvent {
+  id          String   @id @db.VarChar(255)
+  eventType   String   @db.VarChar(100)
+  receivedAt  DateTime @default(now())
 }
 
 model SearchHistory {

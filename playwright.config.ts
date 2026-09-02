@@ -10,9 +10,15 @@ export default defineConfig({
   webServer: {
     command: "npm run test:servers",
     url: "http://127.0.0.1:3000",
+    timeout: 120_000,
     env: {
       ...process.env,
-      SEARCH_HISTORY_STORE: "memory"
+      SEARCH_HISTORY_STORE: "memory",
+      PAYMENTS_STORE: "memory",
+      PAYMENTS_PROVIDER: "mock",
+      NUTRITION_PROVIDER: "mock",
+      APP_URL: "http://127.0.0.1:3000",
+      STRIPE_WEBHOOK_SECRET: "whsec_payments_test_secret"
     },
     reuseExistingServer: !process.env.CI
   }

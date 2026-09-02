@@ -6,6 +6,7 @@ type Product = { id: string; name: string; brand: string | null; imageUrl: strin
 type SearchState = "idle" | "loading" | "success" | "empty" | "error";
 type RecentSearch = { query: string; searchedAt: string };
 type Locale = "en" | "nl" | "de" | "fr";
+type NutritionFacts = { energyKcalPer100g: number | null; fatPer100g: number | null; saturatedFatPer100g: number | null; carbohydratesPer100g: number | null; sugarsPer100g: number | null; proteinPer100g: number | null; saltPer100g: number | null };
 
 type Copy = {
   catalogue: string; issue: string; language: string; title: string; titleEmphasis: string; lead: string;
@@ -13,6 +14,12 @@ type Copy = {
   catalogueResults: string; productResults: string; waiting: string; resultFound: string; resultsFound: string;
   noResults: string; attention: string; looking: string; emptyHint: string; missingImage: string;
   brandMissing: string; emptySearch: string; unavailable: string;
+};
+
+type BillingCopy = {
+  nutritionDetails: string; nutritionLoading: string; subscriptionRequired: string; continueMonthly: string;
+  checkoutPending: string; checkoutCancelled: string; per100g: string; energy: string; fat: string;
+  saturatedFat: string; carbohydrates: string; sugars: string; protein: string; salt: string;
 };
 
 const languages: Array<{ value: Locale; label: string }> = [
@@ -49,6 +56,13 @@ const copy: Record<Locale, Copy> = {
   }
 };
 
+const billingCopy: Record<Locale, BillingCopy> = {
+  en: { nutritionDetails: "Nutrition details", nutritionLoading: "Loading nutrition details...", subscriptionRequired: "Nutrition details are available with the monthly plan.", continueMonthly: "Continue to monthly plan", checkoutPending: "Your payment is being confirmed. Nutrition access will appear after Stripe confirms the subscription.", checkoutCancelled: "Checkout was cancelled. Nutrition details remain locked.", per100g: "Per 100g", energy: "Energy", fat: "Fat", saturatedFat: "Saturated fat", carbohydrates: "Carbohydrates", sugars: "Sugars", protein: "Protein", salt: "Salt" },
+  nl: { nutritionDetails: "Voedingsdetails", nutritionLoading: "Voedingsdetails laden...", subscriptionRequired: "Voedingsdetails zijn beschikbaar met het maandabonnement.", continueMonthly: "Doorgaan naar maandabonnement", checkoutPending: "Je betaling wordt bevestigd. Toegang verschijnt nadat Stripe het abonnement heeft bevestigd.", checkoutCancelled: "Afrekenen is geannuleerd. Voedingsdetails blijven vergrendeld.", per100g: "Per 100 g", energy: "Energie", fat: "Vet", saturatedFat: "Verzadigd vet", carbohydrates: "Koolhydraten", sugars: "Suikers", protein: "Eiwitten", salt: "Zout" },
+  de: { nutritionDetails: "Nahrwertangaben", nutritionLoading: "Nahrwertangaben werden geladen...", subscriptionRequired: "Nahrwertangaben sind mit dem Monatsabo verfügbar.", continueMonthly: "Weiter zum Monatsabo", checkoutPending: "Deine Zahlung wird bestätigt. Der Zugriff erscheint, nachdem Stripe das Abo bestätigt hat.", checkoutCancelled: "Checkout wurde abgebrochen. Nahrwertangaben bleiben gesperrt.", per100g: "Pro 100 g", energy: "Energie", fat: "Fett", saturatedFat: "Gesättigte Fettsäuren", carbohydrates: "Kohlenhydrate", sugars: "Zucker", protein: "Eiweiß", salt: "Salz" },
+  fr: { nutritionDetails: "Informations nutritionnelles", nutritionLoading: "Chargement des informations nutritionnelles...", subscriptionRequired: "Les informations nutritionnelles sont disponibles avec le forfait mensuel.", continueMonthly: "Continuer vers le forfait mensuel", checkoutPending: "Votre paiement est en cours de confirmation. L'accès apparaîtra après confirmation de Stripe.", checkoutCancelled: "Le paiement a été annulé. Les informations nutritionnelles restent verrouillées.", per100g: "Pour 100 g", energy: "Énergie", fat: "Matières grasses", saturatedFat: "Acides gras saturés", carbohydrates: "Glucides", sugars: "Sucres", protein: "Protéines", salt: "Sel" }
+};
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001";
 
 export function ProductSearch() {
@@ -58,7 +72,14 @@ export function ProductSearch() {
   const [state, setState] = useState<SearchState>("idle");
   const [message, setMessage] = useState("");
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const [selectedNutritionProduct, setSelectedNutritionProduct] = useState<Product | null>(null);
+  const [nutrition, setNutrition] = useState<Record<string, NutritionFacts>>({});
+  const [nutritionLoadingId, setNutritionLoadingId] = useState<string | null>(null);
+  const [nutritionError, setNutritionError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
+  const [checkoutState, setCheckoutState] = useState<"pending" | "cancelled" | null>(null);
   const text = copy[locale];
+  const billingText = billingCopy[locale];
 
   async function loadRecentSearches() {
     try {
@@ -71,6 +92,10 @@ export function ProductSearch() {
 
   useEffect(() => { void loadRecentSearches(); }, []);
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get("checkout");
+    setCheckoutState(value === "pending" || value === "cancelled" ? value : null);
+  }, []);
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,6 +116,8 @@ export function ProductSearch() {
 
       const nextProducts = payload.products ?? [];
       setProducts(nextProducts);
+      setSelectedNutritionProduct(null);
+      setNutritionError("");
       setState(nextProducts.length ? "success" : "empty");
       setMessage(formatResultMessage(nextProducts.length, value, text));
       await loadRecentSearches();
@@ -98,6 +125,35 @@ export function ProductSearch() {
       setProducts([]);
       setState("error");
       setMessage(error instanceof Error ? error.message : text.unavailable);
+    }
+  }
+
+  async function loadNutrition(product: Product) {
+    setSelectedNutritionProduct(product);
+    setNutritionError("");
+    setNutritionLoadingId(product.id);
+    try {
+      const response = await fetch(`${apiBaseUrl}/products/${encodeURIComponent(product.id)}/nutrition`);
+      const payload = (await response.json()) as { nutrition?: NutritionFacts; error?: string };
+      if (response.status === 403) return;
+      if (!response.ok || !payload.nutrition) throw new Error(payload.error ?? "Nutrition details are temporarily unavailable.");
+      setNutrition((current) => ({ ...current, [product.id]: payload.nutrition! }));
+    } catch (error) {
+      setNutritionError(error instanceof Error ? error.message : "Nutrition details are temporarily unavailable.");
+    } finally {
+      setNutritionLoadingId(null);
+    }
+  }
+
+  async function startCheckout() {
+    setPaymentError("");
+    try {
+      const response = await fetch(`${apiBaseUrl}/billing/checkout`, { method: "POST" });
+      const payload = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !payload.url) throw new Error(payload.error ?? "Subscription checkout is temporarily unavailable.");
+      window.location.assign(payload.url);
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : "Subscription checkout is temporarily unavailable.");
     }
   }
 
@@ -122,15 +178,20 @@ export function ProductSearch() {
           <div className="search-row"><input id="product-search" name="query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.placeholder} autoComplete="off" /><button type="submit" disabled={state === "loading"}>{state === "loading" ? text.searching : text.search}</button></div>
         </form>
 
+        {checkoutState === "pending" && <p className="payment-notice" role="status">{billingText.checkoutPending}</p>}
+        {checkoutState === "cancelled" && <p className="payment-notice payment-notice-error" role="status">{billingText.checkoutCancelled}</p>}
+
         {recentSearches.length > 0 && <section className="recent-searches" aria-labelledby="recent-searches-heading" aria-label={text.recentlySearched}><p className="eyebrow" id="recent-searches-heading">{text.recentlySearched}</p><ul>{recentSearches.map((search) => <li key={`${search.query}-${search.searchedAt}`}><button type="button" onClick={() => setQuery(search.query)}>{search.query}</button></li>)}</ul></section>}
 
         <section className="results" aria-labelledby="results-heading" aria-live="polite">
           <div className="results-heading"><p className="eyebrow">{text.catalogueResults}</p><h2 id="results-heading">{state === "idle" && text.waiting}{state === "success" && message}{state === "empty" && text.noResults}{state === "error" && text.attention}{state === "loading" && text.looking}</h2></div>
-          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} />)}</ul>}
+          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} billingText={billingText} nutrition={nutrition[product.id]} loading={nutritionLoadingId === product.id} onNutrition={loadNutrition} />)}</ul>}
           {state === "loading" && <div className="notice loading">{text.looking}</div>}
           {state === "empty" && <div className="notice">{text.emptyHint}</div>}
           {state === "error" && <div className="notice error">{message}</div>}
         </section>
+
+        {selectedNutritionProduct && !nutrition[selectedNutritionProduct.id] && !nutritionLoadingId && <section className="subscription-gate" aria-label="Nutrition subscription gate"><p className="eyebrow">{billingText.nutritionDetails}</p><h2>{billingText.subscriptionRequired}</h2>{nutritionError && <p className="notice error">{nutritionError}</p>}<button type="button" onClick={startCheckout}>{billingText.continueMonthly}</button>{paymentError && <p className="notice error">{paymentError}</p>}</section>}
       </section>
     </main>
   );
@@ -140,6 +201,11 @@ function formatResultMessage(count: number, query: string, text: Copy) {
   return (count === 1 ? text.resultFound : text.resultsFound).replace("{count}", String(count)).replace("{query}", query);
 }
 
-function ProductCard({ product, index, text }: { product: Product; index: number; text: Copy }) {
-  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p></li>;
+function ProductCard({ product, index, text, billingText, nutrition, loading, onNutrition }: { product: Product; index: number; text: Copy; billingText: BillingCopy; nutrition: NutritionFacts | undefined; loading: boolean; onNutrition: (product: Product) => void }) {
+  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p><button className="nutrition-button" type="button" disabled={loading} onClick={() => onNutrition(product)}>{loading ? billingText.nutritionLoading : billingText.nutritionDetails}</button>{nutrition && <NutritionPanel nutrition={nutrition} text={billingText} />}</li>;
+}
+
+function NutritionPanel({ nutrition, text }: { nutrition: NutritionFacts; text: BillingCopy }) {
+  const rows: Array<[string, number | null, string]> = [[text.energy, nutrition.energyKcalPer100g, "kcal"], [text.fat, nutrition.fatPer100g, "g"], [text.saturatedFat, nutrition.saturatedFatPer100g, "g"], [text.carbohydrates, nutrition.carbohydratesPer100g, "g"], [text.sugars, nutrition.sugarsPer100g, "g"], [text.protein, nutrition.proteinPer100g, "g"], [text.salt, nutrition.saltPer100g, "g"]];
+  return <dl className="nutrition-panel"><div className="nutrition-panel-heading"><dt>{text.nutritionDetails}</dt><dd>{text.per100g}</dd></div>{rows.map(([label, value, unit]) => <div key={label}><dt>{label}</dt><dd>{value === null ? "—" : `${value} ${unit}`}</dd></div>)}</dl>;
 }

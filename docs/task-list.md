@@ -14,5 +14,9 @@
   - [x] 3.1 Add the English, Dutch, German, and French interface copy and language selector.
   - [x] 3.2 Request and prefer locale-specific Open Food Facts product names, with fallbacks.
   - [x] 3.3 Add the dedicated localization browser scenario and command.
-- [ ] 4. Stripe Checkout, webhook processing, and server-side entitlement enforcement (depends on 2)
+- [x] 4. Stripe Checkout, webhook processing, and server-side entitlement enforcement (depends on 2)
+  - [x] 4.1 Add MySQL-backed entitlement and idempotent Stripe webhook-event records.
+  - [x] 4.2 Create the server-side Checkout, webhook, entitlement, and protected nutrition boundaries.
+  - [x] 4.3 Add the product-card nutrition gate and pending Checkout return state.
+  - [x] 4.4 Add the dedicated payment browser and signed-webhook scenario.
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)

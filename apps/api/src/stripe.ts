@@ -1,0 +1,36 @@
+import Stripe from "stripe";
+
+export class PaymentConfigurationError extends Error {}
+
+export async function createCheckoutSession(input: { userId: string; email: string }) {
+  if (process.env.PAYMENTS_PROVIDER === "mock") {
+    return { url: `${requiredEnvironment("APP_URL")}/?checkout=pending` };
+  }
+
+  const stripe = new Stripe(requiredEnvironment("STRIPE_SECRET_KEY"));
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    client_reference_id: input.userId,
+    customer_email: input.email,
+    line_items: [{ price: requiredEnvironment("STRIPE_PRICE_ID"), quantity: 1 }],
+    subscription_data: { metadata: { demoUserId: input.userId } },
+    success_url: `${requiredEnvironment("APP_URL")}/?checkout=pending`,
+    cancel_url: `${requiredEnvironment("APP_URL")}/?checkout=cancelled`
+  });
+
+  if (!session.url) throw new Error("Stripe did not return a Checkout URL.");
+  return { url: session.url };
+}
+
+export function constructWebhookEvent(rawBody: Buffer, signature: string | undefined) {
+  if (!signature) throw new Error("Stripe signature is required.");
+  const webhookSecret = requiredEnvironment("STRIPE_WEBHOOK_SECRET");
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_local_webhook_verifier");
+  return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+}
+
+function requiredEnvironment(name: string) {
+  const value = process.env[name];
+  if (!value) throw new PaymentConfigurationError(`${name} is not configured.`);
+  return value;
+}
