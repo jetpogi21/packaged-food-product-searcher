@@ -1,0 +1,17 @@
+{
+  "name": "packaged-food-product-searcher",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@food-search/api",
+    "dev:web": "npm run dev --workspace=@food-search/web",
+    "test:servers": "node scripts/start-test-servers.mjs",
+    "test:product-search": "playwright test tests/product-search.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "typescript": "^5.9.0"
+  }
+}

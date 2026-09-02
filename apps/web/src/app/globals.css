@@ -1,0 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --paper: #eef1e8;
+  --ink: #163737;
+  --moss: #315b4a;
+  --clay: #d96a3b;
+  --sun: #f2c35f;
+  --rule: #adc1af;
+  --quiet: #60766d;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); }
+button, input { font: inherit; }
+
+.masthead { display: flex; justify-content: space-between; border-bottom: 1px solid var(--rule); padding-bottom: 0.8rem; }
+.eyebrow, .issue, .card-number { font: 500 0.7rem/1.2 "DM Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.issue { color: var(--quiet); margin: 0; }
+.eyebrow { color: var(--moss); margin: 0; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 10rem; gap: 2rem; align-items: end; padding: clamp(3.5rem, 9vw, 7.5rem) 0 3.5rem; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { font: 400 clamp(4.2rem, 10vw, 8.7rem)/0.8 "Instrument Serif", Georgia, serif; letter-spacing: -0.065em; margin-bottom: 2rem; }
+h1 em { color: var(--clay); }
+.lede { color: var(--quiet); font: 500 1rem/1.6 Manrope, sans-serif; max-width: 35rem; }
+.label-mark { aspect-ratio: 1; background: var(--moss); border-radius: 50%; color: var(--paper); display: grid; font: 500 0.75rem/1 "DM Mono", monospace; letter-spacing: 0.12em; padding: 1.5rem; transform: rotate(-7deg); }
+.label-mark span:nth-child(2) { align-self: end; }.label-mark b { color: var(--sun); font-size: 1.7rem; justify-self: end; }
+.search-form { border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 1rem 0 1.5rem; }
+.search-form label { display: block; font: 600 0.82rem/1.2 Manrope, sans-serif; margin-bottom: 0.7rem; }
+.search-row { display: flex; gap: 0.75rem; }.search-row input { background: #f9fbf6; border: 1px solid var(--rule); border-radius: 0; color: var(--ink); flex: 1; min-width: 0; padding: 1rem 1.1rem; }.search-row input:focus { outline: 3px solid color-mix(in srgb, var(--sun) 75%, white); outline-offset: 2px; }
+.search-row button { background: var(--ink); border: 0; color: white; cursor: pointer; font: 700 0.8rem/1 Manrope, sans-serif; padding: 0 1.5rem; }.search-row button:hover:not(:disabled) { background: var(--clay); }.search-row button:disabled { cursor: wait; opacity: 0.7; }
+.results { padding-top: 3rem; }.results-heading { align-items: baseline; display: flex; gap: 1.3rem; justify-content: space-between; margin-bottom: 1.5rem; }.results-heading h2 { font: 400 clamp(1.7rem, 3vw, 2.5rem)/1.05 "Instrument Serif", Georgia, serif; max-width: 38rem; text-align: right; }
+.product-grid { display: grid; gap: 1px; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; margin: 0; padding: 1px; background: var(--rule); }.product-card { background: var(--paper); min-width: 0; padding: 1rem; }.image-frame { align-items: center; background: #dce5d9; display: flex; height: 12rem; justify-content: center; margin-bottom: 1rem; overflow: hidden; }.image-frame img { height: 100%; object-fit: contain; width: 100%; }.missing-image { color: var(--quiet); font: 500 0.7rem/1.3 "DM Mono", monospace; text-align: center; text-transform: uppercase; }.card-number { color: var(--clay); margin-bottom: 0.5rem; }.product-card h3 { font: 400 1.55rem/0.98 "Instrument Serif", Georgia, serif; overflow-wrap: anywhere; }.brand { color: var(--quiet); font: 500 0.76rem/1.35 Manrope, sans-serif; margin-bottom: 0; }.notice { border-left: 4px solid var(--moss); color: var(--moss); font: 500 0.95rem/1.5 Manrope, sans-serif; max-width: 38rem; padding: 1rem 1.2rem; }.notice.error { border-color: var(--clay); color: #9c361c; }.notice.loading { border-color: var(--sun); }
+@media (max-width: 700px) { .hero-grid { grid-template-columns: 1fr 5.8rem; }.label-mark { padding: 0.9rem; }.search-row { flex-direction: column; }.search-row button { min-height: 3.3rem; }.results-heading { align-items: start; flex-direction: column; gap: 0.65rem; }.results-heading h2 { text-align: left; }.product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.image-frame { height: 9rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
