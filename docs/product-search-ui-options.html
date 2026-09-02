@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product search directions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --paper:#eef1e8; --ink:#163737; --moss:#315b4a; --clay:#d96a3b; --sun:#f2c35f; --rule:#adc1af; --quiet:#60766d; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--ink); color:var(--ink); font-family:Manrope,sans-serif; }
+    .page { max-width:1520px; margin:auto; padding:clamp(1rem,3vw,3.5rem); }.intro { color:var(--paper); max-width:48rem; padding:1rem 0 3rem; }.kicker,.index,.caption { font:500 .68rem/1.25 "DM Mono",monospace; letter-spacing:.09em; text-transform:uppercase; }.kicker { color:var(--sun); margin:0 0 .8rem; }.intro h1 { font:400 clamp(3rem,6vw,6.2rem)/.88 "Instrument Serif",serif; letter-spacing:-.055em; margin:0 0 1rem; }.intro h1 em { color:var(--sun); }.intro p:last-child { color:#cfdbd1; line-height:1.65; margin:0; }
+    .controls { display:flex; gap:.5rem; margin:0 0 1.5rem; }.controls button { appearance:none; background:transparent; border:1px solid #668274; color:var(--paper); cursor:pointer; font:500 .7rem/1 "DM Mono",monospace; letter-spacing:.07em; padding:.75rem 1rem; text-transform:uppercase; }.controls button.active { background:var(--sun); border-color:var(--sun); color:var(--ink); }
+    .directions { display:grid; gap:1.25rem; }.direction { background:var(--paper); overflow:hidden; padding:clamp(1rem,2vw,1.7rem); }.direction-head { align-items:baseline; display:flex; gap:1rem; justify-content:space-between; margin-bottom:1.25rem; }.direction-head h2 { font:400 clamp(1.8rem,3vw,2.8rem)/1 "Instrument Serif",serif; letter-spacing:-.04em; margin:0; }.direction-head p { color:var(--quiet); font-size:.8rem; margin:0; text-align:right; }
+    .viewport { background:var(--paper); border:1px solid var(--rule); min-height:420px; overflow:hidden; padding:1rem; position:relative; transition:width .25s ease; width:100%; }.viewport.phone { box-shadow:0 0 0 8px var(--ink),0 0 0 9px var(--rule); margin:1rem auto; min-height:620px; width:390px; }.masthead { border-bottom:1px solid var(--rule); display:flex; font:500 .62rem/1.2 "DM Mono",monospace; justify-content:space-between; letter-spacing:.08em; padding-bottom:.65rem; text-transform:uppercase; }.masthead span { color:var(--moss); }.masthead small { color:var(--quiet); font:inherit; }
+    .search { display:flex; gap:.6rem; }.search input { background:#f9fbf6; border:1px solid var(--rule); color:var(--ink); flex:1; font:500 .82rem Manrope,sans-serif; min-width:0; padding:.9rem; }.search button { background:var(--ink); border:0; color:white; font:700 .7rem/1 Manrope,sans-serif; padding:0 1.1rem; }.label { color:var(--moss); display:block; font:600 .7rem/1.2 Manrope,sans-serif; margin-bottom:.55rem; }
+    .shelf-hero { align-items:end; display:grid; grid-template-columns:1fr 7rem; gap:1rem; padding:clamp(2.3rem,6vw,5rem) 0 2rem; }.shelf-hero h3,.ledger-title,.scan-title { font:400 clamp(2.6rem,7vw,5.5rem)/.8 "Instrument Serif",serif; letter-spacing:-.065em; margin:0 0 1rem; }.shelf-hero h3 em,.ledger-title em,.scan-title em { color:var(--clay); }.shelf-hero p { color:var(--quiet); font-size:.75rem; line-height:1.55; margin:0; max-width:29rem; }.mark { aspect-ratio:1; background:var(--moss); border-radius:50%; color:var(--paper); display:grid; font:500 .58rem/1 "DM Mono",monospace; letter-spacing:.12em; padding:1rem; transform:rotate(-7deg); }.mark b { align-self:end; color:var(--sun); font-size:1.2rem; justify-self:end; }
+    .resultbar { align-items:baseline; border-bottom:1px solid var(--rule); display:flex; gap:1rem; justify-content:space-between; padding:1.35rem 0 .8rem; }.resultbar .caption { color:var(--moss); }.resultbar strong { font:400 clamp(1.3rem,2.4vw,2.1rem)/1 "Instrument Serif",serif; text-align:right; }.grid { display:grid; gap:1px; grid-template-columns:repeat(4,minmax(0,1fr)); background:var(--rule); }.card { background:var(--paper); padding:.75rem; }.pack { align-items:center; background:#dce5d9; display:flex; height:8rem; justify-content:center; margin-bottom:.7rem; overflow:hidden; }.carton { background:var(--sun); color:var(--ink); font:700 .55rem/1.1 Manrope,sans-serif; height:6.8rem; padding:.7rem .35rem; text-align:center; transform:rotate(-2deg); width:3.4rem; }.carton.blue { background:#74999c; color:white; transform:rotate(3deg); }.carton.clay { background:var(--clay); color:white; }.card .index { color:var(--clay); font-size:.55rem; }.card h4 { font:400 1.12rem/.95 "Instrument Serif",serif; margin:.35rem 0; }.card p { color:var(--quiet); font-size:.62rem; margin:0; }
+    .ledger-top { display:grid; grid-template-columns:1.15fr .85fr; gap:1.5rem; padding:2.6rem 0 1.7rem; }.ledger-title { margin:0; }.ledger-note { align-self:end; border-left:3px solid var(--sun); color:var(--quiet); font-size:.75rem; line-height:1.55; margin:0; padding-left:.8rem; }.ledger { border-top:3px solid var(--ink); }.entry { align-items:center; border-bottom:1px solid var(--rule); display:grid; gap:.8rem; grid-template-columns:1.5rem 3.5rem 1fr auto; padding:.75rem 0; }.entry .pack { height:3.8rem; margin:0; }.entry .carton { height:3rem; padding:.35rem .15rem; width:1.7rem; font-size:.34rem; }.entry h4 { font:400 1.25rem/.95 "Instrument Serif",serif; margin:0; }.entry p { color:var(--quiet); font-size:.64rem; margin:.15rem 0 0; }.entry a { color:var(--moss); font:500 .58rem/1 "DM Mono",monospace; letter-spacing:.06em; text-decoration:none; text-transform:uppercase; }
+    .scan-hero { display:grid; grid-template-columns:1fr 9rem; gap:1rem; padding:2.7rem 0 1.3rem; }.scan-title { margin:0; }.scan-stamp { align-items:center; background:var(--sun); color:var(--ink); display:flex; font:500 .62rem/1.2 "DM Mono",monospace; justify-content:center; letter-spacing:.08em; padding:1rem; text-align:center; text-transform:uppercase; }.scan-search { border-top:3px solid var(--ink); padding:1rem 0; }.scan-results { display:grid; gap:1px; grid-template-columns:1.4fr 1fr 1fr; background:var(--rule); }.feature,.mini { background:var(--paper); min-height:13rem; padding:1rem; }.feature { display:grid; grid-template-columns:8rem 1fr; gap:1rem; }.feature .pack { height:100%; margin:0; }.feature .carton { height:9rem; width:4.5rem; }.feature h4,.mini h4 { font:400 1.8rem/.92 "Instrument Serif",serif; margin:.7rem 0 .4rem; }.feature p,.mini p { color:var(--quiet); font-size:.68rem; margin:0; }.mini .pack { height:6rem; }.mini .carton { height:4.8rem; width:2.4rem; }
+    .recommendation { background:var(--moss); color:var(--paper); padding:1.5rem; }.recommendation p { margin:0; max-width:47rem; }.recommendation p:first-child { color:var(--sun); font:500 .68rem/1.3 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; }.recommendation p:last-child { font:400 1.7rem/1.05 "Instrument Serif",serif; margin-top:.5rem; }
+    @media (max-width:700px) { .viewport.phone { box-shadow:none; margin:0; min-height:0; width:100%; }.viewport.phone .shelf-hero { grid-template-columns:1fr 4.5rem; }.viewport.phone .mark { padding:.6rem; }.viewport.phone .search { flex-direction:column; }.viewport.phone .search button { padding:1rem; }.viewport.phone .grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.viewport.phone .resultbar { align-items:start; flex-direction:column; }.viewport.phone .resultbar strong { text-align:left; }.viewport.phone .ledger-top,.viewport.phone .scan-hero { grid-template-columns:1fr; }.viewport.phone .entry { grid-template-columns:1.2rem 2.8rem 1fr; }.viewport.phone .entry a { display:none; }.viewport.phone .scan-results { grid-template-columns:1fr 1fr; }.viewport.phone .feature { grid-column:span 2; }.viewport.phone .feature .pack { height:7rem; }.viewport.phone .feature .carton { height:5.7rem; width:3rem; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <p class="kicker">Product finder</p>
+      <h1>Three ways to <em>read the shelf.</em></h1>
+      <p>Each direction keeps a clear product search at the centre, then changes how quickly a person can compare what comes back.</p>
+    </section>
+    <div class="controls" aria-label="Preview size"><button class="active" data-size="desktop">Desktop</button><button data-size="phone">Phone</button></div>
+    <section class="directions">
+      <article class="direction">
+        <header class="direction-head"><h2>Shelf index</h2><p>Familiar, broad, and easy to scan across.</p></header>
+        <div class="viewport">
+          <div class="masthead"><span>Open Food Facts catalogue</span><small>Issue 01 · Product finder</small></div>
+          <div class="shelf-hero"><div><h3>Find what’s<br><em>on the label.</em></h3><p>Search a global index of packaged food products by name, brand, or a familiar shelf-term.</p></div><div class="mark"><span>FOOD</span><span>INDEX</span><b>↗</b></div></div>
+          <label class="label">What are you looking for?</label><div class="search"><input value="oat milk" aria-label="What are you looking for?" readonly><button>Search index</button></div>
+          <div class="resultbar"><span class="caption">Catalogue results</span><strong>12 products found for “oat milk”.</strong></div>
+          <div class="grid"><div class="card"><div class="pack"><div class="carton">BARISTA<br>OAT</div></div><span class="index">01</span><h4>Barista Hafer</h4><p>alpro</p></div><div class="card"><div class="pack"><div class="carton blue">OATLY<br>OAT DRINK</div></div><span class="index">02</span><h4>Nordic Oat Drink</h4><p>Arla</p></div><div class="card"><div class="pack"><div class="carton clay">ORGANIC<br>OAT</div></div><span class="index">03</span><h4>Organic oat drink</h4><p>Oatly</p></div><div class="card"><div class="pack"><div class="carton blue">BARISTA<br>EDITION</div></div><span class="index">04</span><h4>Barista edition</h4><p>Oatly</p></div></div>
+        </div>
+      </article>
+      <article class="direction">
+        <header class="direction-head"><h2>Label ledger</h2><p>Less browsing, more deliberate comparison.</p></header>
+        <div class="viewport">
+          <div class="masthead"><span>Open Food Facts catalogue</span><small>Issue 01 · Product finder</small></div>
+          <div class="ledger-top"><h3 class="ledger-title">A closer look<br>at <em>what’s listed.</em></h3><p class="ledger-note">A compact record of the products that match, with just enough detail to make a confident next search.</p></div>
+          <label class="label">What are you looking for?</label><div class="search"><input value="oat milk" aria-label="Ledger search" readonly><button>Search index</button></div>
+          <div class="ledger"><div class="entry"><span class="index">01</span><div class="pack"><div class="carton">BARISTA<br>OAT</div></div><div><h4>Barista Hafer</h4><p>alpro</p></div><a href="#ledger">View label ↗</a></div><div class="entry"><span class="index">02</span><div class="pack"><div class="carton blue">OATLY</div></div><div><h4>Nordic Oat Drink</h4><p>Arla</p></div><a href="#ledger">View label ↗</a></div><div class="entry"><span class="index">03</span><div class="pack"><div class="carton clay">OAT</div></div><div><h4>Organic oat drink</h4><p>Oatly</p></div><a href="#ledger">View label ↗</a></div></div>
+        </div>
+      </article>
+      <article class="direction">
+        <header class="direction-head"><h2>Quick scan</h2><p>Leads with a few strong matches before the longer list.</p></header>
+        <div class="viewport">
+          <div class="masthead"><span>Open Food Facts catalogue</span><small>Issue 01 · Product finder</small></div>
+          <div class="scan-hero"><h3 class="scan-title">Start with the<br><em>right pack.</em></h3><div class="scan-stamp">Find food<br>by its label</div></div>
+          <div class="scan-search"><label class="label">What are you looking for?</label><div class="search"><input value="oat milk" aria-label="Quick scan search" readonly><button>Search index</button></div></div>
+          <div class="resultbar"><span class="caption">Top results</span><strong>12 products found</strong></div>
+          <div class="scan-results"><div class="feature"><div class="pack"><div class="carton">BARISTA<br>OAT<br>MILK</div></div><div><span class="index">01</span><h4>Barista Hafer</h4><p>alpro</p></div></div><div class="mini"><div class="pack"><div class="carton blue">OATLY</div></div><span class="index">02</span><h4>Nordic Oat Drink</h4><p>Arla</p></div><div class="mini"><div class="pack"><div class="carton clay">OAT</div></div><span class="index">03</span><h4>Organic oat drink</h4><p>Oatly</p></div></div>
+        </div>
+      </article>
+      <section class="recommendation"><p>My leaning</p><p>Shelf index makes the most of this product finder’s broad search: it is immediately familiar, lets packaging carry recognition, and keeps room for the information that arrives in later stages.</p></section>
+    </section>
+  </main>
+  <script>
+    const controls = document.querySelectorAll('[data-size]');
+    const views = document.querySelectorAll('.viewport');
+    controls.forEach((button) => button.addEventListener('click', () => {
+      controls.forEach((control) => control.classList.toggle('active', control === button));
+      views.forEach((view) => view.classList.toggle('phone', button.dataset.size === 'phone'));
+    }));
+  </script>
+</body>
+</html>
