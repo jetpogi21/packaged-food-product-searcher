@@ -1,0 +1,14 @@
+AGENTS.md
+
+# Local agent state and supplied assessment material
+.agent/
+assignment (1).pdf
+
+# Dependency and framework output
+node_modules/
+apps/*/.next/
+
+# Focused-test and document-review output
+test-results/
+playwright-report/
+tmp/
