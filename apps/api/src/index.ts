@@ -1,5 +1,10 @@
 import express, { type Request, type Response } from "express";
+import dotenv from "dotenv";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { searchHistoryStore } from "./search-history.js";
+
+dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);

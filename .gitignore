@@ -3,6 +3,7 @@ AGENTS.md
 # Local agent state and supplied assessment material
 .agent/
 assignment (1).pdf
+.env
 
 # Dependency and framework output
 node_modules/
