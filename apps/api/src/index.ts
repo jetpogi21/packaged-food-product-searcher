@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from "express";
+import { searchHistoryStore } from "./search-history.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -29,6 +30,15 @@ app.use((_request, response, next) => {
 });
 
 app.get("/health", (_request, response) => response.json({ ok: true }));
+
+app.get("/recent-searches", async (_request, response) => {
+  try {
+    response.json({ searches: await searchHistoryStore().recent() });
+  } catch (error) {
+    console.error("Recent search lookup failed", error);
+    response.status(503).json({ error: "Recent searches are temporarily unavailable." });
+  }
+});
 
 app.get("/products", async (request: Request, response: Response) => {
   const query = typeof request.query.query === "string" ? request.query.query.trim() : "";
@@ -61,6 +71,7 @@ app.get("/products", async (request: Request, response: Response) => {
       .map(normalizeProduct)
       .filter((product): product is SearchProduct => product !== null);
 
+    await searchHistoryStore().record(query);
     response.json({ products });
   } catch (error) {
     console.error("Open Food Facts search failed", error);

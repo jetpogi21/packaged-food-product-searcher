@@ -8,10 +8,13 @@
     "dev:api": "npm run dev --workspace=@food-search/api",
     "dev:web": "npm run dev --workspace=@food-search/web",
     "test:servers": "node scripts/start-test-servers.mjs",
-    "test:product-search": "playwright test tests/product-search.spec.ts"
+    "test:product-search": "playwright test tests/product-search.spec.ts",
+    "test:recent-searches": "playwright test tests/recent-searches.spec.ts",
+    "prisma:generate": "prisma generate"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "prisma": "^7.10.0",
     "typescript": "^5.9.0"
   }
 }

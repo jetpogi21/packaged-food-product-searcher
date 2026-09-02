@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Product = {
   id: string;
@@ -10,6 +10,7 @@ type Product = {
 };
 
 type SearchState = "idle" | "loading" | "success" | "empty" | "error";
+type RecentSearch = { query: string; searchedAt: string };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001";
 
@@ -18,6 +19,18 @@ export function ProductSearch() {
   const [products, setProducts] = useState<Product[]>([]);
   const [state, setState] = useState<SearchState>("idle");
   const [message, setMessage] = useState("");
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+
+  async function loadRecentSearches() {
+    try {
+      const response = await fetch(`${apiBaseUrl}/recent-searches`);
+      if (!response.ok) return;
+      const payload = (await response.json()) as { searches?: RecentSearch[] };
+      setRecentSearches(payload.searches ?? []);
+    } catch { /* Recent-search history does not prevent product discovery. */ }
+  }
+
+  useEffect(() => { void loadRecentSearches(); }, []);
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,6 +56,7 @@ export function ProductSearch() {
       setProducts(nextProducts);
       setState(nextProducts.length ? "success" : "empty");
       setMessage(nextProducts.length ? `${nextProducts.length} products found for “${value}”.` : `No packaged products matched “${value}”.`);
+      await loadRecentSearches();
     } catch (error) {
       setProducts([]);
       setState("error");
@@ -84,6 +98,15 @@ export function ProductSearch() {
             </button>
           </div>
         </form>
+
+        {recentSearches.length > 0 && (
+          <section className="recent-searches" aria-labelledby="recent-searches-heading">
+            <p className="eyebrow" id="recent-searches-heading">Recently searched</p>
+            <ul>
+              {recentSearches.map((search) => <li key={`${search.query}-${search.searchedAt}`}><button type="button" onClick={() => setQuery(search.query)}>{search.query}</button></li>)}
+            </ul>
+          </section>
+        )}
 
         <section className="results" aria-labelledby="results-heading" aria-live="polite">
           <div className="results-heading">

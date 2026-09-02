@@ -5,7 +5,11 @@
   - [x] 1.2 Normalize Open Food Facts searches in Express.
   - [x] 1.3 Build the responsive search and product-result interface.
   - [x] 1.4 Add the dedicated product-search Playwright scenario and command.
-- [ ] 2. Demo-user and recent-search persistence (depends on 1)
+- [ ] 2. Demo-user and recent-search persistence (active; depends on 1)
+  - [x] 2.1 Add the Prisma MySQL schema, migration, and demo-user search-history store.
+  - [x] 2.2 Show recent successful searches in the product finder.
+  - [x] 2.3 Add the dedicated recent-search browser scenario.
+  - [ ] 2.4 Apply the migration and prove persistence against a real MySQL database.
 - [ ] 3. Four-language interface and product-field localization (depends on 1)
 - [ ] 4. Stripe Checkout, webhook processing, and server-side entitlement enforcement (depends on 2)
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)
