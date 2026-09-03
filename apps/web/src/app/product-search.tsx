@@ -73,6 +73,7 @@ export function ProductSearch() {
   const [state, setState] = useState<SearchState>("idle");
   const [message, setMessage] = useState("");
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const [entitlementActive, setEntitlementActive] = useState<boolean | null>(null);
   const [selectedNutritionProduct, setSelectedNutritionProduct] = useState<Product | null>(null);
   const [nutrition, setNutrition] = useState<Record<string, NutritionFacts>>({});
   const [nutritionLoadingId, setNutritionLoadingId] = useState<string | null>(null);
@@ -91,7 +92,18 @@ export function ProductSearch() {
     } catch { /* Recent-search history does not prevent product discovery. */ }
   }
 
+  async function loadEntitlement() {
+    try {
+      const response = await fetch(`${apiBaseUrl}/entitlement`);
+      const entitlement = (await response.json()) as Entitlement;
+      setEntitlementActive(response.ok ? entitlement.active === true : null);
+    } catch {
+      setEntitlementActive(null);
+    }
+  }
+
   useEffect(() => { void loadRecentSearches(); }, []);
+  useEffect(() => { void loadEntitlement(); }, []);
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get("checkout");
@@ -108,6 +120,7 @@ export function ProductSearch() {
           const entitlement = (await response.json()) as Entitlement;
           if (response.ok && entitlement.active) {
             if (!cancelled) {
+              setEntitlementActive(true);
               setCheckoutState(null);
               window.history.replaceState({}, "", window.location.pathname);
             }
@@ -144,6 +157,7 @@ export function ProductSearch() {
       setProducts(nextProducts);
       setSelectedNutritionProduct(null);
       setNutritionError("");
+      setPaymentError("");
       setState(nextProducts.length ? "success" : "empty");
       setMessage(formatResultMessage(nextProducts.length, value, text));
       await loadRecentSearches();
@@ -157,11 +171,16 @@ export function ProductSearch() {
   async function loadNutrition(product: Product) {
     setSelectedNutritionProduct(product);
     setNutritionError("");
+    setPaymentError("");
+    if (entitlementActive === false) return;
     setNutritionLoadingId(product.id);
     try {
       const response = await fetch(`${apiBaseUrl}/products/${encodeURIComponent(product.id)}/nutrition`);
       const payload = (await response.json()) as { nutrition?: NutritionFacts; error?: string };
-      if (response.status === 403) return;
+      if (response.status === 403) {
+        setEntitlementActive(false);
+        return;
+      }
       if (!response.ok || !payload.nutrition) throw new Error(payload.error ?? "Nutrition details are temporarily unavailable.");
       setNutrition((current) => ({ ...current, [product.id]: payload.nutrition! }));
     } catch (error) {
@@ -196,7 +215,6 @@ export function ProductSearch() {
 
         <div className="hero-grid">
           <div><h1>{text.title}<br /><em>{text.titleEmphasis}</em></h1><p className="lede">{text.lead}</p></div>
-          <div className="label-mark" aria-hidden="true"><span>FOOD</span><span>INDEX</span><b>↗</b></div>
         </div>
 
         <form className="search-form" onSubmit={search}>
@@ -211,13 +229,12 @@ export function ProductSearch() {
 
         <section className="results" aria-labelledby="results-heading" aria-live="polite">
           <div className="results-heading"><p className="eyebrow">{text.catalogueResults}</p><h2 id="results-heading">{state === "idle" && text.waiting}{state === "success" && message}{state === "empty" && text.noResults}{state === "error" && text.attention}{state === "loading" && text.looking}</h2></div>
-          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} billingText={billingText} nutrition={nutrition[product.id]} loading={nutritionLoadingId === product.id} onNutrition={loadNutrition} />)}</ul>}
+          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} billingText={billingText} nutrition={nutrition[product.id]} loading={nutritionLoadingId === product.id} showSubscriptionGate={selectedNutritionProduct?.id === product.id && !nutrition[product.id] && !nutritionLoadingId} nutritionError={selectedNutritionProduct?.id === product.id ? nutritionError : ""} paymentError={selectedNutritionProduct?.id === product.id ? paymentError : ""} onNutrition={loadNutrition} onStartCheckout={startCheckout} />)}</ul>}
           {state === "loading" && <div className="notice loading">{text.looking}</div>}
           {state === "empty" && <div className="notice">{text.emptyHint}</div>}
           {state === "error" && <div className="notice error">{message}</div>}
         </section>
 
-        {selectedNutritionProduct && !nutrition[selectedNutritionProduct.id] && !nutritionLoadingId && <section className="subscription-gate" aria-label="Nutrition subscription gate"><p className="eyebrow">{billingText.nutritionDetails}</p><h2>{billingText.subscriptionRequired}</h2>{nutritionError && <p className="notice error">{nutritionError}</p>}<button type="button" onClick={startCheckout}>{billingText.continueMonthly}</button>{paymentError && <p className="notice error">{paymentError}</p>}</section>}
       </section>
     </main>
   );
@@ -227,8 +244,8 @@ function formatResultMessage(count: number, query: string, text: Copy) {
   return (count === 1 ? text.resultFound : text.resultsFound).replace("{count}", String(count)).replace("{query}", query);
 }
 
-function ProductCard({ product, index, text, billingText, nutrition, loading, onNutrition }: { product: Product; index: number; text: Copy; billingText: BillingCopy; nutrition: NutritionFacts | undefined; loading: boolean; onNutrition: (product: Product) => void }) {
-  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p><button className="nutrition-button" type="button" disabled={loading} onClick={() => onNutrition(product)}>{loading ? billingText.nutritionLoading : billingText.nutritionDetails}</button>{nutrition && <NutritionPanel nutrition={nutrition} text={billingText} />}</li>;
+function ProductCard({ product, index, text, billingText, nutrition, loading, showSubscriptionGate, nutritionError, paymentError, onNutrition, onStartCheckout }: { product: Product; index: number; text: Copy; billingText: BillingCopy; nutrition: NutritionFacts | undefined; loading: boolean; showSubscriptionGate: boolean; nutritionError: string; paymentError: string; onNutrition: (product: Product) => void; onStartCheckout: () => void }) {
+  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p><button className="nutrition-button" type="button" disabled={loading} onClick={() => onNutrition(product)}>{loading ? billingText.nutritionLoading : billingText.nutritionDetails}</button>{nutrition && <NutritionPanel nutrition={nutrition} text={billingText} />}{showSubscriptionGate && <aside className="subscription-gate" aria-label="Nutrition subscription gate" aria-live="polite"><p className="eyebrow">{billingText.nutritionDetails}</p><p className="subscription-message">{billingText.subscriptionRequired}</p>{nutritionError && <p className="notice error">{nutritionError}</p>}<button type="button" onClick={onStartCheckout}>{billingText.continueMonthly}</button>{paymentError && <p className="notice error">{paymentError}</p>}</aside>}</li>;
 }
 
 function NutritionPanel({ nutrition, text }: { nutrition: NutritionFacts; text: BillingCopy }) {
