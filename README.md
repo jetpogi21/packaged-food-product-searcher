@@ -66,7 +66,10 @@ From a product card, choose the monthly plan and complete Stripe's hosted Checko
 
 Each feature has a dedicated Playwright scenario rather than relying on one broad end-to-end suite:
 
+The test commands start an isolated browser/API pair on ports 3100 and 3101 by default, so a local development server on ports 3000 and 3001 cannot affect their results. Override those defaults only with `PLAYWRIGHT_WEB_PORT` and `PLAYWRIGHT_API_PORT` when required.
+
 ```powershell
+npm run test:server-isolation
 npm run test:product-search
 npm run test:recent-searches
 npm run test:localization
