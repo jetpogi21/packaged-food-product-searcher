@@ -8,6 +8,7 @@ type RecentSearch = { query: string; searchedAt: string };
 type Locale = "en" | "nl" | "de" | "fr";
 type NutritionFacts = { energyKcalPer100g: number | null; fatPer100g: number | null; saturatedFatPer100g: number | null; carbohydratesPer100g: number | null; sugarsPer100g: number | null; proteinPer100g: number | null; saltPer100g: number | null };
 type Entitlement = { active?: boolean };
+type CheckoutContext = { query: string; locale: Locale; productId: string };
 
 type Copy = {
   catalogue: string; issue: string; language: string; title: string; titleEmphasis: string; lead: string;
@@ -65,6 +66,7 @@ const billingCopy: Record<Locale, BillingCopy> = {
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001";
+const checkoutContextKey = "pantry-index-checkout-context";
 
 export function ProductSearch() {
   const [query, setQuery] = useState("");
@@ -80,6 +82,7 @@ export function ProductSearch() {
   const [nutritionError, setNutritionError] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [checkoutState, setCheckoutState] = useState<"pending" | "cancelled" | null>(null);
+  const [resumeNutritionAfterCheckout, setResumeNutritionAfterCheckout] = useState(false);
   const text = copy[locale];
   const billingText = billingCopy[locale];
 
@@ -102,12 +105,46 @@ export function ProductSearch() {
     }
   }
 
+  async function searchProducts(value: string, searchLocale: Locale, selectedProductId?: string) {
+    setState("loading");
+    setMessage("");
+    try {
+      const response = await fetch(`${apiBaseUrl}/products?query=${encodeURIComponent(value)}&locale=${searchLocale}`);
+      const payload = (await response.json()) as { products?: Product[]; error?: string };
+      if (!response.ok) throw new Error(payload.error ?? copy[searchLocale].unavailable);
+
+      const nextProducts = payload.products ?? [];
+      setProducts(nextProducts);
+      setSelectedNutritionProduct(selectedProductId ? nextProducts.find((product) => product.id === selectedProductId) ?? null : null);
+      setNutritionError("");
+      setPaymentError("");
+      setState(nextProducts.length ? "success" : "empty");
+      setMessage(formatResultMessage(nextProducts.length, value, copy[searchLocale]));
+      await loadRecentSearches();
+    } catch (error) {
+      setProducts([]);
+      setSelectedNutritionProduct(null);
+      setState("error");
+      setMessage(error instanceof Error ? error.message : copy[searchLocale].unavailable);
+    }
+  }
+
   useEffect(() => { void loadRecentSearches(); }, []);
   useEffect(() => { void loadEntitlement(); }, []);
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get("checkout");
-    setCheckoutState(value === "pending" || value === "cancelled" ? value : null);
+    if (value !== "pending" && value !== "cancelled") return;
+
+    setCheckoutState(value);
+    try {
+      const context = JSON.parse(window.sessionStorage.getItem(checkoutContextKey) ?? "") as CheckoutContext;
+      if (!context.query || !context.productId || !["en", "nl", "de", "fr"].includes(context.locale)) return;
+      setLocale(context.locale);
+      setQuery(context.query);
+      if (value === "pending") setResumeNutritionAfterCheckout(true);
+      void searchProducts(context.query, context.locale, context.productId);
+    } catch { /* A missing or invalid browser-local return context falls back to the landing page. */ }
   }, []);
   useEffect(() => {
     if (checkoutState !== "pending") return;
@@ -122,6 +159,7 @@ export function ProductSearch() {
             if (!cancelled) {
               setEntitlementActive(true);
               setCheckoutState(null);
+              window.sessionStorage.removeItem(checkoutContextKey);
               window.history.replaceState({}, "", window.location.pathname);
             }
             return;
@@ -136,6 +174,12 @@ export function ProductSearch() {
     return () => { cancelled = true; };
   }, [checkoutState]);
 
+  useEffect(() => {
+    if (!resumeNutritionAfterCheckout || !entitlementActive || !selectedNutritionProduct) return;
+    setResumeNutritionAfterCheckout(false);
+    void loadNutrition(selectedNutritionProduct);
+  }, [entitlementActive, resumeNutritionAfterCheckout, selectedNutritionProduct]);
+
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = query.trim();
@@ -146,26 +190,7 @@ export function ProductSearch() {
       return;
     }
 
-    setState("loading");
-    setMessage("");
-    try {
-      const response = await fetch(`${apiBaseUrl}/products?query=${encodeURIComponent(value)}&locale=${locale}`);
-      const payload = (await response.json()) as { products?: Product[]; error?: string };
-      if (!response.ok) throw new Error(payload.error ?? text.unavailable);
-
-      const nextProducts = payload.products ?? [];
-      setProducts(nextProducts);
-      setSelectedNutritionProduct(null);
-      setNutritionError("");
-      setPaymentError("");
-      setState(nextProducts.length ? "success" : "empty");
-      setMessage(formatResultMessage(nextProducts.length, value, text));
-      await loadRecentSearches();
-    } catch (error) {
-      setProducts([]);
-      setState("error");
-      setMessage(error instanceof Error ? error.message : text.unavailable);
-    }
+    await searchProducts(value, locale);
   }
 
   async function loadNutrition(product: Product) {
@@ -192,6 +217,9 @@ export function ProductSearch() {
 
   async function startCheckout() {
     setPaymentError("");
+    if (selectedNutritionProduct) {
+      window.sessionStorage.setItem(checkoutContextKey, JSON.stringify({ query: query.trim(), locale, productId: selectedNutritionProduct.id } satisfies CheckoutContext));
+    }
     try {
       const response = await fetch(`${apiBaseUrl}/billing/checkout`, { method: "POST" });
       const payload = (await response.json()) as { url?: string; error?: string };
@@ -222,14 +250,11 @@ export function ProductSearch() {
           <div className="search-row"><input id="product-search" name="query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.placeholder} autoComplete="off" /><button type="submit" disabled={state === "loading"}>{state === "loading" ? text.searching : text.search}</button></div>
         </form>
 
-        {checkoutState === "pending" && <p className="payment-notice" role="status">{billingText.checkoutPending}</p>}
-        {checkoutState === "cancelled" && <p className="payment-notice payment-notice-error" role="status">{billingText.checkoutCancelled}</p>}
-
         {recentSearches.length > 0 && <section className="recent-searches" aria-labelledby="recent-searches-heading" aria-label={text.recentlySearched}><p className="eyebrow" id="recent-searches-heading">{text.recentlySearched}</p><ul>{recentSearches.map((search) => <li key={`${search.query}-${search.searchedAt}`}><button type="button" onClick={() => setQuery(search.query)}>{search.query}</button></li>)}</ul></section>}
 
         <section className="results" aria-labelledby="results-heading" aria-live="polite">
           <div className="results-heading"><p className="eyebrow">{text.catalogueResults}</p><h2 id="results-heading">{state === "idle" && text.waiting}{state === "success" && message}{state === "empty" && text.noResults}{state === "error" && text.attention}{state === "loading" && text.looking}</h2></div>
-          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} billingText={billingText} nutrition={nutrition[product.id]} loading={nutritionLoadingId === product.id} showSubscriptionGate={selectedNutritionProduct?.id === product.id && !nutrition[product.id] && !nutritionLoadingId} nutritionError={selectedNutritionProduct?.id === product.id ? nutritionError : ""} paymentError={selectedNutritionProduct?.id === product.id ? paymentError : ""} onNutrition={loadNutrition} onStartCheckout={startCheckout} />)}</ul>}
+          {state === "success" && <ul className="product-grid" aria-label={text.productResults}>{products.map((product, index) => <ProductCard key={product.id} product={product} index={index} text={text} billingText={billingText} nutrition={nutrition[product.id]} loading={nutritionLoadingId === product.id} showCheckoutPending={selectedNutritionProduct?.id === product.id && !nutrition[product.id] && !nutritionLoadingId && checkoutState === "pending"} showSubscriptionGate={selectedNutritionProduct?.id === product.id && !nutrition[product.id] && !nutritionLoadingId && checkoutState !== "pending"} checkoutCancelled={selectedNutritionProduct?.id === product.id && checkoutState === "cancelled"} nutritionError={selectedNutritionProduct?.id === product.id ? nutritionError : ""} paymentError={selectedNutritionProduct?.id === product.id ? paymentError : ""} onNutrition={loadNutrition} onStartCheckout={startCheckout} />)}</ul>}
           {state === "loading" && <div className="notice loading">{text.looking}</div>}
           {state === "empty" && <div className="notice">{text.emptyHint}</div>}
           {state === "error" && <div className="notice error">{message}</div>}
@@ -244,8 +269,8 @@ function formatResultMessage(count: number, query: string, text: Copy) {
   return (count === 1 ? text.resultFound : text.resultsFound).replace("{count}", String(count)).replace("{query}", query);
 }
 
-function ProductCard({ product, index, text, billingText, nutrition, loading, showSubscriptionGate, nutritionError, paymentError, onNutrition, onStartCheckout }: { product: Product; index: number; text: Copy; billingText: BillingCopy; nutrition: NutritionFacts | undefined; loading: boolean; showSubscriptionGate: boolean; nutritionError: string; paymentError: string; onNutrition: (product: Product) => void; onStartCheckout: () => void }) {
-  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p><button className="nutrition-button" type="button" disabled={loading} onClick={() => onNutrition(product)}>{loading ? billingText.nutritionLoading : billingText.nutritionDetails}</button>{nutrition && <NutritionPanel nutrition={nutrition} text={billingText} />}{showSubscriptionGate && <aside className="subscription-gate" aria-label="Nutrition subscription gate" aria-live="polite"><p className="eyebrow">{billingText.nutritionDetails}</p><p className="subscription-message">{billingText.subscriptionRequired}</p>{nutritionError && <p className="notice error">{nutritionError}</p>}<button type="button" onClick={onStartCheckout}>{billingText.continueMonthly}</button>{paymentError && <p className="notice error">{paymentError}</p>}</aside>}</li>;
+function ProductCard({ product, index, text, billingText, nutrition, loading, showCheckoutPending, showSubscriptionGate, checkoutCancelled, nutritionError, paymentError, onNutrition, onStartCheckout }: { product: Product; index: number; text: Copy; billingText: BillingCopy; nutrition: NutritionFacts | undefined; loading: boolean; showCheckoutPending: boolean; showSubscriptionGate: boolean; checkoutCancelled: boolean; nutritionError: string; paymentError: string; onNutrition: (product: Product) => void; onStartCheckout: () => void }) {
+  return <li className="product-card"><div className="image-frame">{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <span className="missing-image">{text.missingImage}</span>}</div><p className="card-number">{String(index + 1).padStart(2, "0")}</p><h3>{product.name}</h3><p className="brand">{product.brand ?? text.brandMissing}</p><button className="nutrition-button" type="button" disabled={loading} onClick={() => onNutrition(product)}>{loading ? billingText.nutritionLoading : billingText.nutritionDetails}</button>{nutrition && <NutritionPanel nutrition={nutrition} text={billingText} />}{showCheckoutPending && <aside className="subscription-gate" aria-label="Nutrition subscription confirmation" aria-live="polite"><p className="eyebrow">{billingText.nutritionDetails}</p><p className="subscription-message" role="status">{billingText.checkoutPending}</p></aside>}{showSubscriptionGate && <aside className="subscription-gate" aria-label="Nutrition subscription gate" aria-live="polite">{checkoutCancelled && <p className="subscription-message" role="status">{billingText.checkoutCancelled}</p>}<p className="eyebrow">{billingText.nutritionDetails}</p><p className="subscription-message">{billingText.subscriptionRequired}</p>{nutritionError && <p className="notice error">{nutritionError}</p>}<button type="button" onClick={onStartCheckout}>{billingText.continueMonthly}</button>{paymentError && <p className="notice error">{paymentError}</p>}</aside>}</li>;
 }
 
 function NutritionPanel({ nutrition, text }: { nutrition: NutritionFacts; text: BillingCopy }) {

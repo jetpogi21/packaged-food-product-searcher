@@ -16,6 +16,7 @@
     "test:checkout-return-status": "playwright test tests/checkout-return-status.spec.ts",
     "test:responsive-layout": "playwright test tests/responsive-layout.spec.ts",
     "test:subscription-unlock-panel": "playwright test tests/subscription-unlock-panel.spec.ts",
+    "test:checkout-return-context": "playwright test tests/checkout-return-context.spec.ts",
     "prisma:generate": "prisma generate"
   },
   "devDependencies": {

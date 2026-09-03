@@ -22,4 +22,5 @@
   - [x] 4.5 Clear the pending Checkout return state after entitlement confirmation (depends on 4.2, 4.3, 4.4).
   - [x] 4.6 Restore responsive layout spacing and mobile header fit (depends on 1, 4.3).
   - [x] 4.7 Make the nutrition subscription unlock contextual and compact the hero (depends on 4.3, 4.6).
+  - [x] 4.8 Resume the selected product after Checkout return (depends on 4.3, 4.7).
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)
