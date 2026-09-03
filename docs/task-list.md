@@ -25,4 +25,6 @@
   - [x] 4.8 Resume the selected product after Checkout return (depends on 4.3, 4.7).
   - [x] 4.9 Make product search the first landing-page action and localize Stripe Checkout (depends on 3.1, 4.2).
   - [x] 4.10 Add a dedicated search-first and localized-Checkout scenario (depends on 4.9).
+  - [x] 4.11 Allow the localized Checkout request's CORS preflight (depends on 4.9).
+  - [x] 4.12 Add a dedicated localized-Checkout CORS scenario (depends on 4.11).
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)

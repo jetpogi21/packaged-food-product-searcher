@@ -47,8 +47,14 @@ type NutritionFacts = {
 const supportedLocales = ["en", "nl", "de", "fr"] as const;
 type SupportedLocale = (typeof supportedLocales)[number];
 
-app.use((_request, response, next) => {
+app.use((request, response, next) => {
   response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (request.method === "OPTIONS") {
+    response.status(204).end();
+    return;
+  }
   next();
 });
 
