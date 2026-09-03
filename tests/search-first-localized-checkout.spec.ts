@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
+const webBaseUrl = process.env.PLAYWRIGHT_WEB_BASE_URL ?? "http://127.0.0.1:3100";
 
 test("starts with search and carries the selected language into Checkout", async ({ page, request }, testInfo) => {
   const checkoutResponse = await request.post(`${apiBaseUrl}/billing/checkout`, { data: { locale: "de" } });
@@ -12,7 +13,7 @@ test("starts with search and carries the selected language into Checkout", async
   await page.route(`${apiBaseUrl}/products?query=hafermilch&locale=de`, (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ locale: "de", products: [{ id: "123", name: "Hafermilch", brand: "Test Pantry", imageUrl: null }] }) }));
   await page.route(`${apiBaseUrl}/billing/checkout`, async (route) => {
     expect(JSON.parse(route.request().postData() ?? "{}")).toEqual({ locale: "de" });
-    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ url: "http://127.0.0.1:3000/?checkout=pending", locale: "de" }) });
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ url: `${webBaseUrl}/?checkout=pending`, locale: "de" }) });
   });
 
   await page.goto("/");

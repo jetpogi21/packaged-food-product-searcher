@@ -34,3 +34,4 @@
   - [x] 5.2 Document architecture, internationalization, Stripe webhook flow, decisions, and limitations.
   - [x] 5.3 Expand the safe environment template and add a focused submission-artifact verifier (depends on 5.1, 5.2).
   - [x] 5.4 Review the required repository artifacts and record the no-deployment scope (depends on 5.3).
+- [x] 6. Sequential full test pass and targeted regression repair (depends on 1, 2, 3, 4, 5) -> [sub-tasks](./tasks/06-sequential-full-test-pass.md)

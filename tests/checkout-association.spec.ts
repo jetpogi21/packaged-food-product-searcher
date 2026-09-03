@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import Stripe from "stripe";
 import { checkoutInputFromUser } from "../apps/api/src/stripe";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
 
 test("maps the demo user identity into a Checkout Session input", () => {
   expect(checkoutInputFromUser({ id: "demo-user", email: "demo@example.com" }, "de")).toEqual({

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
 
 test("keeps the product finder contained at desktop and phone widths", async ({ page }, testInfo) => {
   await page.route(`${apiBaseUrl}/recent-searches`, (route) => route.fulfill({

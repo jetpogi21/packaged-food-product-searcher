@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
 
 test("shows the monthly-plan action within the selected locked product", async ({ page }, testInfo) => {
   await page.route(`${apiBaseUrl}/recent-searches`, (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ searches: [] }) }));

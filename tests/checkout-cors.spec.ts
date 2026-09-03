@@ -1,12 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
+const webBaseUrl = process.env.PLAYWRIGHT_WEB_BASE_URL ?? "http://127.0.0.1:3100";
 
 test("allows the browser to send the localized Checkout request", async ({ page, request }) => {
   const preflight = await request.fetch(`${apiBaseUrl}/billing/checkout`, {
     method: "OPTIONS",
     headers: {
-      Origin: "http://127.0.0.1:3000",
+      Origin: webBaseUrl,
       "Access-Control-Request-Method": "POST",
       "Access-Control-Request-Headers": "content-type"
     }

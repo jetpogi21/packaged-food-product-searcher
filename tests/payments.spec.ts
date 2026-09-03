@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import Stripe from "stripe";
 
-const apiBaseUrl = "http://127.0.0.1:3001";
+const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:3101";
 const webhookSecret = "whsec_payments_test_secret";
 
 test("keeps nutrition locked until a verified subscription webhook activates access", async ({ page, request }, testInfo) => {
