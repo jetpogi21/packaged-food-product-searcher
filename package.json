@@ -20,6 +20,7 @@
     "test:search-first-localized-checkout": "playwright test tests/search-first-localized-checkout.spec.ts",
     "test:checkout-cors": "playwright test tests/checkout-cors.spec.ts",
     "test:checkout-association": "playwright test tests/checkout-association.spec.ts",
+    "verify:submission": "node scripts/check-submission-artifacts.mjs",
     "prisma:generate": "prisma generate"
   },
   "devDependencies": {

@@ -29,4 +29,8 @@
   - [x] 4.12 Add a dedicated localized-Checkout CORS scenario (depends on 4.11).
   - [x] 4.13 Preserve the demo-user identity when creating Checkout Sessions (depends on 4.2).
   - [x] 4.14 Add a dedicated Checkout-association regression scenario (depends on 4.13).
-- [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)
+- [x] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)
+  - [x] 5.1 Document local setup, MySQL migration, and focused run commands.
+  - [x] 5.2 Document architecture, internationalization, Stripe webhook flow, decisions, and limitations.
+  - [x] 5.3 Expand the safe environment template and add a focused submission-artifact verifier (depends on 5.1, 5.2).
+  - [x] 5.4 Review the required repository artifacts and record the no-deployment scope (depends on 5.3).
