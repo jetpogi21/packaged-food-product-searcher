@@ -13,6 +13,7 @@
     "test:localization": "playwright test tests/localization.spec.ts",
     "test:payments": "playwright test tests/payments.spec.ts",
     "test:checkout-entitlement": "playwright test tests/checkout-entitlement.spec.ts",
+    "test:checkout-return-status": "playwright test tests/checkout-return-status.spec.ts",
     "prisma:generate": "prisma generate"
   },
   "devDependencies": {

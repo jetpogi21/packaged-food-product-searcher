@@ -19,4 +19,5 @@
   - [x] 4.2 Create the server-side Checkout, webhook, entitlement, and protected nutrition boundaries.
   - [x] 4.3 Add the product-card nutrition gate and pending Checkout return state.
   - [x] 4.4 Add the dedicated payment browser and signed-webhook scenario.
+  - [x] 4.5 Clear the pending Checkout return state after entitlement confirmation (depends on 4.2, 4.3, 4.4).
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)

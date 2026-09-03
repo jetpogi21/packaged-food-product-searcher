@@ -7,6 +7,7 @@ type SearchState = "idle" | "loading" | "success" | "empty" | "error";
 type RecentSearch = { query: string; searchedAt: string };
 type Locale = "en" | "nl" | "de" | "fr";
 type NutritionFacts = { energyKcalPer100g: number | null; fatPer100g: number | null; saturatedFatPer100g: number | null; carbohydratesPer100g: number | null; sugarsPer100g: number | null; proteinPer100g: number | null; saltPer100g: number | null };
+type Entitlement = { active?: boolean };
 
 type Copy = {
   catalogue: string; issue: string; language: string; title: string; titleEmphasis: string; lead: string;
@@ -96,6 +97,31 @@ export function ProductSearch() {
     const value = new URLSearchParams(window.location.search).get("checkout");
     setCheckoutState(value === "pending" || value === "cancelled" ? value : null);
   }, []);
+  useEffect(() => {
+    if (checkoutState !== "pending") return;
+
+    let cancelled = false;
+    async function waitForEntitlement() {
+      for (let attempt = 0; attempt < 15 && !cancelled; attempt += 1) {
+        try {
+          const response = await fetch(`${apiBaseUrl}/entitlement`);
+          const entitlement = (await response.json()) as Entitlement;
+          if (response.ok && entitlement.active) {
+            if (!cancelled) {
+              setCheckoutState(null);
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+            return;
+          }
+        } catch { /* Keep the pending notice while confirmation remains unavailable. */ }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 2_000));
+      }
+    }
+
+    void waitForEntitlement();
+    return () => { cancelled = true; };
+  }, [checkoutState]);
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
