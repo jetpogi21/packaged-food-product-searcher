@@ -27,4 +27,6 @@
   - [x] 4.10 Add a dedicated search-first and localized-Checkout scenario (depends on 4.9).
   - [x] 4.11 Allow the localized Checkout request's CORS preflight (depends on 4.9).
   - [x] 4.12 Add a dedicated localized-Checkout CORS scenario (depends on 4.11).
+  - [x] 4.13 Preserve the demo-user identity when creating Checkout Sessions (depends on 4.2).
+  - [x] 4.14 Add a dedicated Checkout-association regression scenario (depends on 4.13).
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)

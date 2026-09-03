@@ -4,6 +4,10 @@ export class PaymentConfigurationError extends Error {}
 
 export type CheckoutLocale = "en" | "nl" | "de" | "fr";
 
+export function checkoutInputFromUser(user: { id: string; email: string }, locale: CheckoutLocale) {
+  return { userId: user.id, email: user.email, locale };
+}
+
 export async function createCheckoutSession(input: { userId: string; email: string; locale: CheckoutLocale }) {
   if (process.env.PAYMENTS_PROVIDER === "mock") {
     return { url: `${requiredEnvironment("APP_URL")}/?checkout=pending`, locale: input.locale };

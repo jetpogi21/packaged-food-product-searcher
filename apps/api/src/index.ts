@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { entitlementStore } from "./entitlements.js";
 import { searchHistoryStore } from "./search-history.js";
-import { constructWebhookEvent, createCheckoutSession, PaymentConfigurationError, retrieveSubscriptionEntitlement } from "./stripe.js";
+import { checkoutInputFromUser, constructWebhookEvent, createCheckoutSession, PaymentConfigurationError, retrieveSubscriptionEntitlement } from "./stripe.js";
 
 dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
@@ -90,7 +90,7 @@ app.get("/entitlement", async (_request, response) => {
 app.post("/billing/checkout", async (request, response) => {
   try {
     const user = await entitlementStore().demoUser();
-    response.json(await createCheckoutSession({ ...user, locale: parseLocale(request.body?.locale) }));
+    response.json(await createCheckoutSession(checkoutInputFromUser(user, parseLocale(request.body?.locale))));
   } catch (error) {
     console.error("Checkout session creation failed", error);
     const message = error instanceof PaymentConfigurationError ? "Subscription checkout is not configured yet." : "Subscription checkout is temporarily unavailable.";

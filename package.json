@@ -19,6 +19,7 @@
     "test:checkout-return-context": "playwright test tests/checkout-return-context.spec.ts",
     "test:search-first-localized-checkout": "playwright test tests/search-first-localized-checkout.spec.ts",
     "test:checkout-cors": "playwright test tests/checkout-cors.spec.ts",
+    "test:checkout-association": "playwright test tests/checkout-association.spec.ts",
     "prisma:generate": "prisma generate"
   },
   "devDependencies": {
