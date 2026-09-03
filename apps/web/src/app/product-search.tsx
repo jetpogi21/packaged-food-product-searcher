@@ -184,8 +184,8 @@ export function ProductSearch() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--paper)] px-5 py-6 text-[var(--ink)] sm:px-8 lg:px-12" lang={locale}>
-      <section className="mx-auto max-w-6xl">
+    <main className="app-shell" lang={locale}>
+      <section className="content-shell">
         <div className="masthead">
           <p className="eyebrow">{text.catalogue}</p>
           <div className="masthead-actions">
