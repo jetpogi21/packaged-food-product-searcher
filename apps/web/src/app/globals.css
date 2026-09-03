@@ -23,12 +23,8 @@ button, input { font: inherit; }
 .eyebrow, .issue, .card-number { font: 500 0.7rem/1.2 "DM Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 .issue { color: var(--quiet); margin: 0; }
 .eyebrow { color: var(--moss); margin: 0; }
-.hero-grid { max-width: 42rem; padding: clamp(2.25rem, 5vw, 4.5rem) 0 2.25rem; }
-h1, h2, h3, p { margin-top: 0; }
-h1 { font: 400 clamp(4.2rem, 10vw, 8.7rem)/0.8 "Instrument Serif", Georgia, serif; letter-spacing: -0.065em; margin-bottom: 2rem; }
-h1 em { color: var(--clay); }
-.lede { color: var(--quiet); font: 500 1rem/1.6 Manrope, sans-serif; max-width: 35rem; }
-.search-form { border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 1rem 0 1.5rem; }
+h2, h3, p { margin-top: 0; }
+.search-form { border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule); margin-top: 1rem; padding: 1rem 0 1.5rem; }
 .search-form label { display: block; font: 600 0.82rem/1.2 Manrope, sans-serif; margin-bottom: 0.7rem; }
 .search-row { display: flex; gap: 0.75rem; }.search-row input { background: #f9fbf6; border: 1px solid var(--rule); border-radius: 0; color: var(--ink); flex: 1; min-width: 0; padding: 1rem 1.1rem; }.search-row input:focus { outline: 3px solid color-mix(in srgb, var(--sun) 75%, white); outline-offset: 2px; }
 .search-row button { background: var(--ink); border: 0; color: white; cursor: pointer; font: 700 0.8rem/1 Manrope, sans-serif; padding: 0 1.5rem; }.search-row button:hover:not(:disabled) { background: var(--clay); }.search-row button:disabled { cursor: wait; opacity: 0.7; }

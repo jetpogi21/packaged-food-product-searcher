@@ -23,4 +23,6 @@
   - [x] 4.6 Restore responsive layout spacing and mobile header fit (depends on 1, 4.3).
   - [x] 4.7 Make the nutrition subscription unlock contextual and compact the hero (depends on 4.3, 4.6).
   - [x] 4.8 Resume the selected product after Checkout return (depends on 4.3, 4.7).
+  - [x] 4.9 Make product search the first landing-page action and localize Stripe Checkout (depends on 3.1, 4.2).
+  - [x] 4.10 Add a dedicated search-first and localized-Checkout scenario (depends on 4.9).
 - [ ] 5. Submission documentation and final artifacts (depends on 1, 2, 3, 4)

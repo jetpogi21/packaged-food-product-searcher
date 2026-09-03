@@ -2,9 +2,11 @@ import Stripe from "stripe";
 
 export class PaymentConfigurationError extends Error {}
 
-export async function createCheckoutSession(input: { userId: string; email: string }) {
+export type CheckoutLocale = "en" | "nl" | "de" | "fr";
+
+export async function createCheckoutSession(input: { userId: string; email: string; locale: CheckoutLocale }) {
   if (process.env.PAYMENTS_PROVIDER === "mock") {
-    return { url: `${requiredEnvironment("APP_URL")}/?checkout=pending` };
+    return { url: `${requiredEnvironment("APP_URL")}/?checkout=pending`, locale: input.locale };
   }
 
   const stripe = new Stripe(requiredEnvironment("STRIPE_SECRET_KEY"));
@@ -13,6 +15,7 @@ export async function createCheckoutSession(input: { userId: string; email: stri
     client_reference_id: input.userId,
     customer_email: input.email,
     line_items: [{ price: requiredEnvironment("STRIPE_PRICE_ID"), quantity: 1 }],
+    locale: input.locale,
     subscription_data: { metadata: { demoUserId: input.userId } },
     success_url: `${requiredEnvironment("APP_URL")}/?checkout=pending`,
     cancel_url: `${requiredEnvironment("APP_URL")}/?checkout=cancelled`

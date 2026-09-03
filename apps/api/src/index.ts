@@ -68,6 +68,8 @@ app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (re
   }
 });
 
+app.use(express.json());
+
 app.get("/health", (_request, response) => response.json({ ok: true }));
 
 app.get("/entitlement", async (_request, response) => {
@@ -79,10 +81,10 @@ app.get("/entitlement", async (_request, response) => {
   }
 });
 
-app.post("/billing/checkout", async (_request, response) => {
+app.post("/billing/checkout", async (request, response) => {
   try {
     const user = await entitlementStore().demoUser();
-    response.json(await createCheckoutSession(user));
+    response.json(await createCheckoutSession({ ...user, locale: parseLocale(request.body?.locale) }));
   } catch (error) {
     console.error("Checkout session creation failed", error);
     const message = error instanceof PaymentConfigurationError ? "Subscription checkout is not configured yet." : "Subscription checkout is temporarily unavailable.";
